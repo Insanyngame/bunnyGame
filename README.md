@@ -6,4 +6,4 @@ Game made in [KaboomJS](https://kaboomjs.com) (old KaplayJS)
 I got some game assets from itch.io:
 
 - [Bunny sprites](https://toffeecraft.itch.io/bunny-pixel-animations-mega-pack) by [ToffeCraft](https://toffeecraft.itch.io/)
-- [Background and tilemap assets](sanctumpixel.itch.io/forest-lite-pixel-art-tileset) by [sactumpixel](https://sanctumpixel.itch.io/)
+- [Background and tilemap assets](https://sanctumpixel.itch.io/forest-lite-pixel-art-tileset) by [sactumpixel](https://sanctumpixel.itch.io/)
