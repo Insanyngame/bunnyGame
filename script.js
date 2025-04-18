@@ -124,6 +124,26 @@ scene("home", async() => {
         scale(3),
         color(160, 160, 160),
     ]);
+    add([
+        sprite("bunnyWhiteIdle"),
+        pos(50, 50),
+        scale(4)
+    ])
+    add([
+        sprite("bunnyGrayIdle"),
+        pos(50, 80),
+        scale(4)
+    ])
+    add([
+        sprite("bunnyYellowIdle"),
+        pos(50, 110),
+        scale(4)
+    ])
+    add([
+        text("A small\nbunny game", {size: 96, font:"pixel"}),
+        pos(200, 80),
+        // anchor("left"),
+    ])
     await enterScene();
     let playText = add([
         text("Play", {size: 24, font: "pixel"}),
@@ -136,25 +156,9 @@ scene("home", async() => {
         anchor("left")
     ])
 
-    let bunny1 = add([
-        sprite("bunnyWhiteIdle"),
-        pos(50, 50),
-        scale(4)
-    ])
-    let bunny2 = add([
-        sprite("bunnyGrayIdle"),
-        pos(50, 80),
-        scale(4)
-    ])
-    let bunny3 = add([
-        sprite("bunnyYellowIdle"),
-        pos(50, 110),
-        scale(4)
-    ])
-    let titleText = add([
-        text("A small\nbunny game", {size: 96, font:"pixel"}),
-        pos(200, 80),
-        // anchor("left"),
+    add([
+        text("Arrow keys to select, z to confirm.", {size: 24, font:"pixel"}),
+        pos(50, 550),
     ])
 
     async function addThings() {
@@ -181,8 +185,10 @@ scene("home", async() => {
     })
 
     onKeyPress("z", () => {
-        if(gambiarra) go("game", 0);
-        else go("Eu nao tive tempo para codar isso entao vai ser assim mesmo");
+        exitScene().then(() => {
+            if(gambiarra) go("game", 0);
+            else go("levels");
+        })
     })
 
     let selectIcon = add([
@@ -199,6 +205,100 @@ scene("home", async() => {
     // await addThings();
 })
 
+scene("levels", async() => {
+    add([
+        sprite("bg"),
+        pos(-100, -100),
+        scale(3),
+        color(160, 160, 160),
+    ]);
+    add([
+        text("Level Select", {size: 96, font:"pixel"}),
+        pos(400, 80),
+        anchor("top"),
+    ])
+    await enterScene();
+
+    const amountOfLevels = 9;
+    let levelBox = [];
+    let levelNumber = [];
+
+    for(let i = 0; i < amountOfLevels; i++) {
+        levelBox.push(add([
+            rect(48, 48),
+            // border(10),
+            outline(5, {color: rgb (250, 250, 250)}),
+            // text(i+1, {size: 24}),
+            pos(200+400/5*(i%5) + 600/20, 800 + parseInt(i/5)*100),
+            anchor("center"),
+            color(50, 50, 150)
+        ]))
+        levelNumber.push(add([
+            text(i+1, {size: 24}),
+            pos(200+400/5*(i%5) + 600/20, 800 + parseInt(i/5)*100),
+            anchor("center"),
+            z(2)
+        ]))
+    }
+
+    async function addThings() {
+        for(let i = 0; i < 20; i++) {
+            for(let j = 0; j < amountOfLevels; j++) {
+                levelBox[j].pos.y -= (levelBox[j].pos.y - (300 + parseInt(j/5)*100))*0.2;
+                levelNumber[j].pos.y = levelBox[j].pos.y +2;
+            }
+            await wait(0.05)
+        }
+    }
+    await addThings();
+
+    add([
+        text("Arrow keys to select, z to confirm.", {size: 24, font:"pixel"}),
+        pos(50, 550),
+    ])
+
+    let selectedLevel = 0;
+    levelBox[selectedLevel].use(color(100, 100, 250));
+
+    let alreadySelected = false;
+
+    onKeyPress("down", () => {
+        if(alreadySelected) return;
+        levelBox[selectedLevel].use(color(50, 50, 150));
+        selectedLevel += 5;
+        if(selectedLevel >= amountOfLevels) selectedLevel %=5;
+        levelBox[selectedLevel].use(color(100, 100, 250));
+    })
+    onKeyPress("up", () => {
+        if(alreadySelected) return;
+        levelBox[selectedLevel].use(color(50, 50, 150));
+        selectedLevel -= 5;
+        if(selectedLevel < 0) selectedLevel += 5*(parseInt(amountOfLevels/5)+1);
+        if(selectedLevel >= amountOfLevels) selectedLevel -= 5;
+        levelBox[selectedLevel].use(color(100, 100, 250));
+    })
+    onKeyPress("right", () => {
+        if(alreadySelected) return;
+        levelBox[selectedLevel].use(color(50, 50, 150));
+        selectedLevel++;
+        if(selectedLevel >= amountOfLevels) selectedLevel = 0;
+        levelBox[selectedLevel].use(color(100, 100, 250));
+    })
+    onKeyPress("left", () => {
+        if(alreadySelected) return;
+        levelBox[selectedLevel].use(color(50, 50, 150));
+        selectedLevel--;
+        if(selectedLevel < 0) selectedLevel = amountOfLevels-1;
+        levelBox[selectedLevel].use(color(100, 100, 250));
+    })
+
+    onKeyPress("z", () => {
+        alreadySelected = true;
+        levelBox[selectedLevel].use(color(0, 0, 50));
+        exitScene().then(() => go("game", selectedLevel));
+    })
+})
+
 // scene GAME
 scene("game", async(level) => {
 // await enterScene();
@@ -206,7 +306,7 @@ scene("game", async(level) => {
 const CollisionTileSize = 40;
 const TotalDashCooldown = 8;
 const TileSize = 32;
-const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, -1];
+const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, 4, -1];
 const TextSize = 18;
 let gamePaused = false;
 
@@ -348,6 +448,22 @@ let levelsTile = [
         "                                         ",
         "                                         "
     ], // 7
+    [
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                          ***         ",
+        "                                   c                  ",
+        "                                  .....       c       ",
+        "     p                            .....    ....       ",
+        "                                           ....       ",
+        "         g  c               s c                       ",
+        "   .............          .....                       ",
+        "   .............          .....                       ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      "
+    ], // 8
     [[]]
 ]
 
@@ -449,7 +565,7 @@ function loadLevel() {
             color(textColor)
         ])
         add([
-            pos(500, 82),
+            pos(450, 100),
             text("Hold z(or the left button of your mouse) to jump farther.", {size: TextSize, font: "pixel"}),
             color(textColor)
         ])
@@ -488,6 +604,11 @@ function loadLevel() {
             text("Is that a shield?\nBunnies are afraid of weapons!\nCollecting the shield will make the bunny scared.", {size: TextSize, font: "pixel"}),
             color(textColor)
         ])
+        add([
+            pos(650, 320),
+            text("Tip: If you hold up key, you can jump higher.\nThe opposite is also true.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
     }
     if(level == 6) {
         add([
@@ -500,6 +621,18 @@ function loadLevel() {
         add([
             pos(32, 150),
             text("Gold coins make you greedy.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 8) {
+        add([
+            pos(32, 150),
+            text("Be careful!\nCollecting carrots give you a snap back to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+        add([
+            pos(1000, 50),
+            text("Try going to the very edge without falling\nand then jumping forward, you will not receive any boost upward.", {size: TextSize, font: "pixel"}),
             color(textColor)
         ])
     }
