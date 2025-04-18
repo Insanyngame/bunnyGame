@@ -11,6 +11,7 @@ kaboom({
 });
 
 function loadAllSprites() {
+    loadFont("pixel", "src/PixelifySans-SemiBold.ttf");
     loadSprite("bunnyWhiteIdle", "src/bunnyWhiteIdle.png", {
         sliceX: 3,
         sliceY: 4,
@@ -25,7 +26,35 @@ function loadAllSprites() {
             anim: { from: 0, to: 7, loop: true },
         },
     });
-    ["bg", "carrot", "bush"].forEach(e => loadSprite(e, "src/"+e+".png"));
+    loadSprite("bunnyGrayIdle", "src/bunnyGrayIdle.png", {
+        sliceX: 3,
+        sliceY: 4,
+        anims: {
+            anim: { from: 0, to: 11, loop: true },
+        },
+    });
+    loadSprite("bunnyGrayRun", "src/bunnyGrayRun.png", {
+        sliceX: 4,
+        sliceY: 2,
+        anims: {
+            anim: { from: 0, to: 7, loop: true },
+        },
+    });
+    loadSprite("bunnyYellowIdle", "src/bunnyYellowIdle.png", {
+        sliceX: 3,
+        sliceY: 4,
+        anims: {
+            anim: { from: 0, to: 11, loop: true },
+        },
+    });
+    loadSprite("bunnyYellowRun", "src/bunnyYellowRun.png", {
+        sliceX: 4,
+        sliceY: 2,
+        anims: {
+            anim: { from: 0, to: 7, loop: true },
+        },
+    });
+    ["bg", "carrot", "bush", "shield", "gold", "bunnyIcon"].forEach(e => loadSprite(e, "src/"+e+".png"));
     // loadSprite("bg", "src/bg.png");
     loadSprite("tile", "src/tiles.png", {
         sliceX: 5,
@@ -46,6 +75,8 @@ function loadAllSprites() {
             l:  { from: 12,  to: 12 },
         }
     })
+
+    loadSound("fall", "src/fall.mp3");
 }
 
 loadAllSprites();
@@ -54,13 +85,129 @@ scene("win", () => {
     
 })
 
+async function enterScene() {
+    let r = add([
+        pos(0, 0),
+        rect(800, 600),
+        fixed(),
+        color(BLACK),
+        opacity(1),
+        z(5)
+    ])
+    for(let i = 0; i < 10; i++) {
+        r.opacity -= 0.1;
+        await wait(0.05);
+    }
+    return;
+}
+
+async function exitScene() {
+    let r = add([
+        pos(0, 0),
+        rect(800, 600),
+        fixed(),
+        color(BLACK),
+        opacity(0),
+        z(5)
+    ])
+    for(let i = 0; i < 10; i++) {
+        r.opacity += 0.1;
+        await wait(0.05);
+    }
+    return;
+}
+
+scene("home", async() => {
+    add([
+        sprite("bg"),
+        pos(-100, -100),
+        scale(3),
+        color(160, 160, 160),
+    ]);
+    await enterScene();
+    let playText = add([
+        text("Play", {size: 24, font: "pixel"}),
+        pos(850, 400),
+        anchor("left")
+    ])
+    let levelText = add([
+        text("Levels", {size: 24, font: "pixel"}),
+        pos(850, 450),
+        anchor("left")
+    ])
+
+    let bunny1 = add([
+        sprite("bunnyWhiteIdle"),
+        pos(50, 50),
+        scale(4)
+    ])
+    let bunny2 = add([
+        sprite("bunnyGrayIdle"),
+        pos(50, 80),
+        scale(4)
+    ])
+    let bunny3 = add([
+        sprite("bunnyYellowIdle"),
+        pos(50, 110),
+        scale(4)
+    ])
+    let titleText = add([
+        text("A small\nbunny game", {size: 96, font:"pixel"}),
+        pos(200, 80),
+        // anchor("left"),
+    ])
+
+    async function addThings() {
+        for(let i = 0; i < 20; i++) {
+            playText.pos.x += (150 - playText.pos.x)*0.2;
+            levelText.pos.x += (150 - levelText.pos.x)*0.2;
+            await wait(0.05)
+        }
+    }
+    await addThings();
+
+    let gambiarra = true;
+    onKeyPress("up", () => {
+        gambiarra = !gambiarra;
+    })
+    onKeyPress("down", () => {
+        gambiarra = !gambiarra;
+    })
+    onKeyPress("w", () => {
+        gambiarra = !gambiarra;
+    })
+    onKeyPress("s", () => {
+        gambiarra = !gambiarra;
+    })
+
+    onKeyPress("z", () => {
+        if(gambiarra) go("game", 0);
+        else go("Eu nao tive tempo para codar isso entao vai ser assim mesmo");
+    })
+
+    let selectIcon = add([
+        sprite("bunnyIcon"),
+        scale(2),
+        pos(100, 390),
+        anchor("left")
+    ])
+    loop(0.01, () => {
+        if(gambiarra) selectIcon.pos.y = 390;
+        else selectIcon.pos.y = 440;
+    })
+
+    // await addThings();
+})
+
 // scene GAME
-scene("game", (level) => {
+scene("game", async(level) => {
+// await enterScene();
 
 const CollisionTileSize = 40;
 const TotalDashCooldown = 8;
 const TileSize = 32;
-const RequiredCarrots = [1, 2, 1, 3, -1];
+const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, -1];
+const TextSize = 18;
 let gamePaused = false;
 
 let startingPos = {x: 3, y: -2};
@@ -138,22 +285,70 @@ let levelsTile = [
         "                                          "
     ], // 3
     [
+        "   p                       ",
+        "   s                       ",
+        "                           ",
+        "                           ",
+        "                           ",
+        "                           ",
+        "                           ",
+        "   ..                 c    ",
+        "  ....               ...   ",
+        "  ....               ...   ",
+        "   ...   **          ..    ",
+        "   ....................    ",
+        "   ....................    ",
+        "                           "
+    ], // 4
+    [
         "                                          ",
         "               c                          ",
         "              .....                       ",
         "              .....   ..                  ",
-        "                      ..                  ",
-        "                                          ",
-        "    p                          c          ",
-        "                         b                ",
-        "                 ...    .....             ",
+        "                      ..        *         ",
+        "                               ..         ",
+        "    p                          ..         ",
+        "                         s                ",
+        "         *       ...    .....             ",
         "   ...........   ...    .....             ",
         "   ...........                            ",
         "                                          ",
         "                                          ",
         "                                          "
-    ],
-    []
+    ], // 5
+    [
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "     p                                   ",
+        "     g                                   ",
+        "                                         ",
+        "   .............          .....          ",
+        "   .............          .....          ",
+        "                                         ",
+        "                             c           ",
+        "                                         "
+    ], // 6
+    [
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "                                         ",
+        "     p                                   ",
+        "                                         ",
+        "          *   g              c           ",
+        "   .............          .....          ",
+        "   .............          .....          ",
+        "                                         ",
+        "                                         ",
+        "                                         "
+    ], // 7
+    [[]]
 ]
 
 function loadLevel() {
@@ -207,9 +402,37 @@ function loadLevel() {
                 add([
                     pos(c*TileSize, row*TileSize),
                     sprite("bush"),
-                    scale(2),
                     z(2)
                 ])
+            }
+
+            // shield
+            if(levelsTile[level][row][c] == 's') {
+                let a = addColliding({
+                    x: c*TileSize, y: row*TileSize,
+                    width: TileSize, height: TileSize,
+                    tg: "shield",
+                    sprObj: add([
+                        pos(c*TileSize, row*TileSize),
+                        sprite("shield"),
+                        z(2)
+                    ])
+                })
+                if(level == 4) a.sprObj.use(opacity(0));
+            }
+            // gold
+            if(levelsTile[level][row][c] == 'g') {
+                let a = addColliding({
+                    x: c*TileSize, y: row*TileSize,
+                    width: TileSize, height: TileSize,
+                    tg: "gold",
+                    sprObj: add([
+                        pos(c*TileSize, row*TileSize),
+                        sprite("gold"),
+                        z(2)
+                    ])
+                })
+                if(level == 6) a.sprObj.use(opacity(0));
             }
 
             // player
@@ -218,36 +441,71 @@ function loadLevel() {
             }
         }
     }
-
+    let textColor = WHITE;
     if(level == 0) {
         add([
             pos(32, 50),
-            text("WASD or arrows to move.\nYou are a bunny, so you will only move by jumping.\nCollect one carrot to win.", {size: 12}),
-            color(BLACK)
+            text("WASD or arrows to move.\nYou are a bunny, so you will only move by jumping.\nCollect one carrot to win.", {size: TextSize, font: "pixel"}),
+            color(textColor)
         ])
         add([
-            pos(600, 82),
-            text("Hold Z to jump farther.", {size: 12}),
-            color(BLACK)
+            pos(500, 82),
+            text("Hold z(or the left button of your mouse) to jump farther.", {size: TextSize, font: "pixel"}),
+            color(textColor)
         ])
     }
     if(level == 1) {
         add([
             pos(32, 50),
-            text("Collect two carrots to win.", {size: 12}),
-            color(BLACK)
+            text("If you ever get tired of playing, you can press ESC to go back to starting screen.", {size: TextSize, font: "pixel"}),
+            color(textColor)
         ])
     }
     if(level == 2) {
         add([
             pos(32, 50),
-            text("Avoid deadly, dangerous, unsafe, hazardous, lethal, toxic, poisonous and venomous wild bushes.\nCollect one carrot to win.", {size: 12}),
-            color(BLACK)
+            text("Avoid deadly, dangerous, unsafe, hazardous, lethal, toxic, poisonous and venomous wild bushes.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 3) {
+        add([
+            pos(32, 150),
+            text("If you want, go see the source code on github!\nhttps://insanyngame.github.io/bunnyGame", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 4) {
+        add([
+            pos(32, 150),
+            text("Scared!\nGetting scared will make you jump higher.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 5) {
+        add([
+            pos(500, 150),
+            text("Is that a shield?\nBunnies are afraid of weapons!\nCollecting the shield will make the bunny scared.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 6) {
+        add([
+            pos(32, 150),
+            text("Greedy, always trying to find new things!\nGetting greedy will make you move faster.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 7) {
+        add([
+            pos(32, 150),
+            text("Gold coins make you greedy.", {size: TextSize, font: "pixel"}),
+            color(textColor)
         ])
     }
 }
 
-loadLevel(0);
+loadLevel();
 
 let player = add([
     rect(40, 24),
@@ -261,16 +519,17 @@ let player = add([
         moveVelX: 0,
         dashCd: 0,
         collectedCarrots: 0,
-        bunnyColor: "White"
+        bunnyColor: "White",
+        playingFallSound: false
     }
 ])
 
 let playerSpr = add([
-    pos(0, 0),
-    sprite("bunnyWhiteIdle"),
+    pos(player.pos.x + -10, player.pos.y + -40),
+    sprite(`bunny${player.bunnyColor}Idle`),
     scale(2),
     {
-        sprite: "bunnyWhiteIdle",
+        sprite: `bunny${player.bunnyColor}Idle`,
         face: 0, // (0 é direita, 1 é esquerda, msm q o flipX)
         ofs: {
             x: -10, y: -40
@@ -289,6 +548,32 @@ function areRectanglesColliding(rect1, rect2) {
 function collidingCarrot(obj1) {
     let objToCheck = [];
     objToCheck = get("carrot");
+
+    let returnVal = false;
+
+    objToCheck.forEach((obj2) => {
+        if(areRectanglesColliding(obj1, obj2)) returnVal = obj2;
+    })
+
+    return returnVal;
+}
+
+function collidingShield(obj1) {
+    let objToCheck = [];
+    objToCheck = get("shield");
+
+    let returnVal = false;
+
+    objToCheck.forEach((obj2) => {
+        if(areRectanglesColliding(obj1, obj2)) returnVal = obj2;
+    })
+
+    return returnVal;
+}
+
+function collidingGold(obj1) {
+    let objToCheck = [];
+    objToCheck = get("gold");
 
     let returnVal = false;
 
@@ -421,11 +706,31 @@ function flipPlayerSpr(flip) {
     playerSpr.face = flip;
 }
 // flipPlayerSpr(true);
+const CorneringAmount = 10;
+
+function isCorneringRight(obj) {
+    if(!isGrounded(obj)) return false;
+    let res = false;
+    player.pos.x += CorneringAmount;
+    if(!isGrounded(obj)) res = true;
+    player.pos.x -= CorneringAmount;
+    return res;
+}
+
+function isCorneringLeft(obj) {
+    if(!isGrounded(obj)) return false;
+    let res = false;
+    player.pos.x -= CorneringAmount;
+    if(!isGrounded(obj)) res = true;
+    player.pos.x += CorneringAmount;
+    return res;
+}
 
 function getVelocities() {
+    // if (isCornering(player))debug.log(isCornering(player));
     // gravity
-    if(isKeyDown("up") || isKeyDown("w")) player.velY = Math.min(player.velY + 1.5, 36);
-    else player.velY = Math.min(player.velY + 3, 36);
+    if(isKeyDown("up") || isKeyDown("w")) player.velY = Math.min(player.velY + 2, 36);
+    else player.velY = Math.min(player.velY + 4, 36);
 
     player.dashCd = Math.max(player.dashCd-1, 0);
 
@@ -438,24 +743,31 @@ function getVelocities() {
         else player.velX = (player.velX * 0.95);
     }
 
-    if(isGrounded(player) && (isKeyDown('w') || isKeyDown('up'))) {
-        player.velY -= 15;
+    let velXBoost = 6;
+    if(player.bunnyColor == "Yellow") velXBoost = 12;
+
+    let velYBoost = 20;
+    if(player.bunnyColor == "Gray") velYBoost = 25;
+    if(isGrounded(player) && (isKeyDown("w") || isKeyDown("up"))) {
+        // debug.log(isCorneringLeft + " " + isCorneringRight)
+        if(!((isCorneringLeft(player) && (isKeyDown("a") || isKeyDown("left"))) || (isCorneringRight(player) && (isKeyDown("d") || isKeyDown("right"))))) player.velY -= velYBoost;
+        else velXBoost += 6;
     }
 
     let moveVelX = 0;
     if(!isGrounded(player)) {
-        if(isKeyDown("left") || isKeyDown("a")) moveVelX -= 6;
-        if(isKeyDown("right") || isKeyDown("d")) moveVelX += 6;
+        if(isKeyDown("left") || isKeyDown("a")) moveVelX -= velXBoost;
+        if(isKeyDown("right") || isKeyDown("d")) moveVelX += velXBoost;
     
-        if(player.velX > -6 && moveVelX == -6) player.velX = Math.max(player.velX + moveVelX, -6);
-        if(player.velX < 6 && moveVelX == 6) player.velX = Math.min(player.velX + moveVelX, 6);
-    } else if(isKeyDown("z") && player.dashCd == 0 && (isKeyDown("up") || isKeyDown("w"))) {
-        if(isKeyDown("left") || isKeyDown("e")) moveVelX -= 18;
-        if(isKeyDown("right") || isKeyDown("d")) moveVelX += 18;
+        if(player.velX > -velXBoost && moveVelX == -velXBoost) player.velX = Math.max(player.velX + moveVelX, -velXBoost);
+        if(player.velX < velXBoost && moveVelX == velXBoost) player.velX = Math.min(player.velX + moveVelX, velXBoost);
+    } else if((isKeyDown("z") || isMouseDown()) && player.dashCd == 0 && (isKeyDown("up") || isKeyDown("w"))) {
+        if(isKeyDown("left") || isKeyDown("a")) moveVelX -= 3*velXBoost;
+        if(isKeyDown("right") || isKeyDown("d")) moveVelX += 3*velXBoost;
         player.dashCd = TotalDashCooldown;
     
-        if(player.velX > -18 && moveVelX == -18) player.velX = Math.max(player.velX + moveVelX, -18);
-        if(player.velX < 18 && moveVelX == 18) player.velX = Math.min(player.velX + moveVelX, 18);
+        if(player.velX > -3*velXBoost && moveVelX == -3*velXBoost) player.velX = Math.max(player.velX + moveVelX, -3*velXBoost);
+        if(player.velX < 3*velXBoost && moveVelX == 3*velXBoost) player.velX = Math.min(player.velX + moveVelX, 3*velXBoost);
     }
 }
 
@@ -463,6 +775,7 @@ function movePlayer() {
     let beforeCollideId = collidingListId(player);
 
     if(player.velY >= 0) {
+        let wasGrounded = isGrounded(player);
         player.pos.y += player.velY;
         let afterCollideId = collidingListId(player);
         let afterCollide = collidingList(player);
@@ -474,7 +787,9 @@ function movePlayer() {
             }
         })
 
-        if(newCollisions.length > 0) player.velY = 0;
+        if(newCollisions.length > 0) {
+            player.velY = 0;
+        }
 
         afterCollide.forEach(obj => {
             if(newCollisions.includes(obj.id)) {
@@ -493,7 +808,9 @@ function movePlayer() {
             }
         })
 
-        if(newCollisions.length > 0) player.velY = 0;
+        if(newCollisions.length > 0) {
+            player.velY = 0;
+        }
 
         afterCollide.forEach(obj => {
             if(newCollisions.includes(obj.id)) {
@@ -571,31 +888,126 @@ function updateSprite() {
     if(player.velX != 0 && ((player.velX < 0) != playerSpr.face)) flipPlayerSpr(player.velX < 0);
 }
 
-function updateCarrots() {
-    let carrot = collidingCarrot(player)
+function updatePowerUp() {
+    let carrot = collidingCarrot(player);
+    let shield = collidingShield(player);
+    let gold = collidingGold(player);
+
     if(carrot) {
+        player.bunnyColor = "White";
+        
+        if(playerSpr.sprite.includes("Run")) {
+            playerSpr.sprite = `bunny${player.bunnyColor}Run`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Run`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 12});
+            // debug.log(playerSpr.face);
+        } else {
+            playerSpr.sprite = `bunny${player.bunnyColor}Idle`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Idle`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 3});
+        }
+        carrotCounter[player.collectedCarrots].unuse("color");
+        let sprPos = carrot.sprObj.pos;
         carrot.sprObj.destroy();
         carrot.destroy();
         player.collectedCarrots++;
         if(RequiredCarrots[level] == player.collectedCarrots) {
-            go("game", level+1);
+            gamePaused = true;
+            add([
+                pos(sprPos.x, sprPos.y),
+                sprite("carrot"),
+                scale(2),
+                z(6)
+            ])
+            exitScene().then(() => {
+                go("game", level+1);
+            })
         }
-        // gamePaused = true;
+    } else if(shield) {
+        player.bunnyColor = "Gray";
+        
+        if(playerSpr.sprite.includes("Run")) {
+            playerSpr.sprite = `bunny${player.bunnyColor}Run`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Run`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 12});
+        } else {
+            playerSpr.sprite = `bunny${player.bunnyColor}Idle`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Idle`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 3});
+        }
+        shield.sprObj.destroy();
+        shield.destroy();
+    } else if(gold) {
+        player.bunnyColor = "Yellow";
+        
+        if(playerSpr.sprite.includes("Run")) {
+            playerSpr.sprite = `bunny${player.bunnyColor}Run`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Run`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 12});
+        } else {
+            playerSpr.sprite = `bunny${player.bunnyColor}Idle`;
+            playerSpr.use(sprite(`bunny${player.bunnyColor}Idle`, {flipX: playerSpr.face}));
+            playerSpr.play("anim", {speed: 3});
+        }
+        gold.sprObj.destroy();
+        gold.destroy();
     }
+    bg.use(color(bg[player.bunnyColor][0], bg[player.bunnyColor][1], bg[player.bunnyColor][2]))
 }
 
 let bg = add([
     sprite("bg"),
-    pos(-800, -400),
+    pos(-800, -600),
     scale(8),
-    z(-1)
+    color(160, 160, 160),
+    z(-1),
+    {
+        White: [160, 160, 160],
+        Gray: [100, 100, 100],
+        Yellow: [160, 160, 100]
+    }
 ])
+
+if(level == 4) bg.use(color(bg.Gray[0], bg.Gray[1], bg.Gray[2]));
+if(level == 6) bg.use(color(bg.Yellow[0], bg.Yellow[1], bg.Yellow[2]));
+
+playerSpr.opacity = 0;
+camPos(player.pos.x + (playerSpr.face?-80:80), player.pos.y+100)
+await enterScene();
+playerSpr.opacity = 1;
+
+function fallingEffect() {
+    if(!player.playingFallSound) {
+        play("fall");
+        player.playingFallSound = true;
+        wait(0.02).then(() => {
+            player.playingFallSound = false;
+        })
+    }
+}
 
 function updateCamera() {
     let oldCam = camPos();
     let newPos = {x: player.pos.x + (playerSpr.face?-80:80), y: player.pos.y-80};
     camPos(oldCam.x + (newPos.x - oldCam.x)*0.2, oldCam.y + (newPos.y - oldCam.y)*0.2);
 }
+
+let carrotCounter = []
+function addCarrotCounter () {
+    for(let i = 0; i < RequiredCarrots[level]; i++) {
+        carrotCounter.push(
+            add([
+                pos(16+i*TileSize, 16),
+                scale(2),
+                sprite("carrot"),
+                color(150, 150, 150),
+                fixed()
+            ])
+        )
+    }
+}
+
+addCarrotCounter();
 
 let pWasPressed = false;
 function pauseControl() {
@@ -605,6 +1017,15 @@ function pauseControl() {
 
     pWasPressed = isKeyDown("p");
 }
+
+function exitControl() {
+    if(isKeyDown("escape")) {
+        gamePaused = true;
+        exitScene().then(() => go("home"))
+    }
+}
+
+
 
 let lastTime = performance.now();
 let tick = 0;
@@ -616,19 +1037,24 @@ loop(0.001, () => {
     tick++;
     tick %= 2;
 
-    pauseControl();
-
+    // pauseControl();
+    exitControl();
     if(!gamePaused) {
         // player.pos.x += 6;
         if(tick %2 == 0) {
+            let lastVelY = player.velY;
             getVelocities();
             movePlayer();
-            updateCarrots();
+            if(lastVelY > 0 && player.velY <= 0) fallingEffect();
+            updatePowerUp();
             updateSprite();
             updateCamera();
         }
 
-        if(isCollidingKillBlock(player)) go("game", level);
+        if(isCollidingKillBlock(player)) {
+            gamePaused = true;
+            exitScene().then(() => go("game", level))
+        }
 
         playerSpr.pos.x = player.pos.x + playerSpr.ofs.x;
         playerSpr.pos.y = player.pos.y + playerSpr.ofs.y;
@@ -636,4 +1062,4 @@ loop(0.001, () => {
 })
 })
 
-go("game", 0);
+go("home");
