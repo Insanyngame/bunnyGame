@@ -219,7 +219,7 @@ scene("levels", async() => {
     ])
     await enterScene();
 
-    const amountOfLevels = 9;
+    const amountOfLevels = 11;
     let levelBox = [];
     let levelNumber = [];
 
@@ -306,7 +306,7 @@ scene("game", async(level) => {
 const CollisionTileSize = 40;
 const TotalDashCooldown = 8;
 const TileSize = 32;
-const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, 4, -1];
+const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, 4, 2, 5, -1];
 const TextSize = 18;
 let gamePaused = false;
 
@@ -464,6 +464,61 @@ let levelsTile = [
         "                                                      ",
         "                                                      "
     ], // 8
+    [
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "     p                                                ",
+        "              ****                                    ",
+        "         g             ***       ***                  ",
+        "   ........                      ***                  ",
+        "   ........     ...              ***                  ",
+        "                ...      ...    *****                 ",
+        " ************************...     ***                  ",
+        "                        **        *                   ",
+        "                                                      ",
+        "                *                                     ",
+        "                 c     ...    c ..                    ",
+        "                ...    ...   .....                    ",
+        "                ...    ...   .....                    ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      "
+    ], // 9
+    [
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "                                                      ",
+        "     p        ***                                     ",
+        "              ***                                     ",
+        "         g             ***       ***                  ",
+        "   ........                      ***                  ",
+        "   ........     ...              ***                  ",
+        "                ...      ...    *****                 ",
+        " ************************...     ***                  ",
+        "                        **        *                   ",
+        "                                                      ",
+        "               *                                      ",
+        "                 c     ...    c ..                    ",
+        "                ...    ...   .....                    ",
+        "          ...   ...    ...   .....                    ",
+        "          ...                                         ",
+        "                                                      ",
+        "                                                      ",
+        "         c                                            ",
+        "          c                                           ",
+        "                                                      ",
+        "           c                                          ",
+        "           ..                                         ",
+        "           ..                                         ",
+        "                                                      "
+    ], // 10
     [[]]
 ]
 
@@ -627,7 +682,19 @@ function loadLevel() {
     if(level == 8) {
         add([
             pos(32, 150),
-            text("Be careful!\nCollecting carrots give you a snap back to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
+            text("Be careful!\nCollecting carrots give you a snapback to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+        add([
+            pos(1000, 50),
+            text("Try going to the very edge without falling\nand then jumping forward, you will not receive any boost upward.", {size: TextSize, font: "pixel"}),
+            color(textColor)
+        ])
+    }
+    if(level == 8) {
+        add([
+            pos(32, 150),
+            text("Be careful!\nCollecting carrots give you a snapback to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
             color(textColor)
         ])
         add([
