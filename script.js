@@ -3,15 +3,34 @@
 
 kaboom({
     background: [130, 130, 150],
-    width: 800,
-    height: 600,
-    canvas: document.getElementById("cv"),
+    width: 400,
+    height: 300,
+    // canvas: document.getElementById("cv"),
+    // scale: 2,
+    stretch: true,
     letterbox: true,
-    debug: true
+    // debug: true
+});
+
+let homeMusic = new Howl({
+    src: ['src/bunny_home.mp3'],
+    loop: true,
+});
+let gameMusic = new Howl({
+    src: ['src/bunny_game.mp3'],
+    loop: true,
 });
 
 function loadAllSprites() {
     loadFont("pixel", "src/PixelifySans-SemiBold.ttf");
+    loadFont("bauhaus", "src/bauhaus93.ttf");
+    loadSprite("smoke", "src/smoke.png", {
+        sliceX: 2,
+        sliceY: 3,
+        anims: {
+            anim: { from: 0, to: 4, loop: false },
+        },
+    });
     loadSprite("bunnyWhiteIdle", "src/bunnyWhiteIdle.png", {
         sliceX: 3,
         sliceY: 4,
@@ -54,7 +73,7 @@ function loadAllSprites() {
             anim: { from: 0, to: 7, loop: true },
         },
     });
-    ["bg", "carrot", "bush", "shield", "gold", "bunnyIcon"].forEach(e => loadSprite(e, "src/"+e+".png"));
+    ["bg", "carrot", "bush", "shield", "gold", "bunnyIcon", "winScreen", "goldenCarrot", "INSANYNGAME"].forEach(e => loadSprite(e, "src/"+e+".png"));
     // loadSprite("bg", "src/bg.png");
     loadSprite("tile", "src/tiles.png", {
         sliceX: 5,
@@ -77,12 +96,41 @@ function loadAllSprites() {
     })
 
     loadSound("fall", "src/fall.mp3");
+    loadSound("pam", "src/pam.mp3");
 }
 
 loadAllSprites();
 
-scene("win", () => {
-    
+scene("win", async() => {
+    add([
+        sprite("winScreen"),
+        pos(-50, 0),
+        scale(0.3)
+    ]);
+    add([
+        text("You won!", {size: 96, font:"pixel"}),
+        pos(200, 40),
+        anchor("top"),
+        scale(0.5)
+    ])
+    await enterScene();
+    homeMusic.play();
+    add([
+        text("Press z to go back to home screen.", {size: 24, font:"pixel"}),
+        pos(25, 275),
+        scale(0.5)
+    ])
+    add([
+        text("Please go check https://github.com/Insanyngame/bunnyGame :)", {size: 12, font:"pixel"}),
+        pos(50/2, 525/2),
+        scale(0.5)
+    ])
+
+    onKeyPress("z", () => {
+        exitScene().then(() => {
+            go("home");
+        })
+    })
 })
 
 async function enterScene() {
@@ -92,7 +140,8 @@ async function enterScene() {
         fixed(),
         color(BLACK),
         opacity(1),
-        z(5)
+        z(5),
+        scale(0.5)
     ])
     for(let i = 0; i < 10; i++) {
         r.opacity -= 0.1;
@@ -120,51 +169,57 @@ async function exitScene() {
 scene("home", async() => {
     add([
         sprite("bg"),
-        pos(-100, -100),
-        scale(3),
+        pos(-100/2, -100/2),
+        scale(3/2),
         color(160, 160, 160),
     ]);
     add([
         sprite("bunnyWhiteIdle"),
-        pos(50, 50),
-        scale(4)
+        pos(50/2, 50/2),
+        scale(4/2)
     ])
     add([
         sprite("bunnyGrayIdle"),
-        pos(50, 80),
-        scale(4)
+        pos(50/2, 80/2),
+        scale(4/2)
     ])
     add([
         sprite("bunnyYellowIdle"),
-        pos(50, 110),
-        scale(4)
+        pos(50/2, 110/2),
+        scale(4/2)
     ])
     add([
         text("A small\nbunny game", {size: 96, font:"pixel"}),
-        pos(200, 80),
+        pos(200/2, 80/2),,
+        scale(0.5)
         // anchor("left"),
     ])
     await enterScene();
+    homeMusic.play();
+
     let playText = add([
         text("Play", {size: 24, font: "pixel"}),
-        pos(850, 400),
-        anchor("left")
+        pos(850/2, 400/2),
+        anchor("left"),
+        scale(0.5)
     ])
     let levelText = add([
         text("Levels", {size: 24, font: "pixel"}),
-        pos(850, 450),
-        anchor("left")
+        pos(850/2, 450/2),
+        anchor("left"),
+        scale(0.5)
     ])
 
     add([
         text("Arrow keys to select, z to confirm.", {size: 24, font:"pixel"}),
-        pos(50, 550),
+        pos(50/2, 550/2),
+        scale(0.5)
     ])
 
     async function addThings() {
         for(let i = 0; i < 20; i++) {
-            playText.pos.x += (150 - playText.pos.x)*0.2;
-            levelText.pos.x += (150 - levelText.pos.x)*0.2;
+            playText.pos.x += (150/2 - playText.pos.x)*0.2;
+            levelText.pos.x += (150/2 - levelText.pos.x)*0.2;
             await wait(0.05)
         }
     }
@@ -172,34 +227,41 @@ scene("home", async() => {
 
     let gambiarra = true;
     onKeyPress("up", () => {
+        play("pam", {volume: 0.5});
         gambiarra = !gambiarra;
     })
     onKeyPress("down", () => {
+        play("pam", {volume: 0.5});
         gambiarra = !gambiarra;
     })
     onKeyPress("w", () => {
+        play("pam", {volume: 0.5});
         gambiarra = !gambiarra;
     })
     onKeyPress("s", () => {
+        play("pam", {volume: 0.5});
         gambiarra = !gambiarra;
     })
 
     onKeyPress("z", () => {
+        if(gambiarra) homeMusic.stop();
         exitScene().then(() => {
-            if(gambiarra) go("game", 0);
+            if(gambiarra) {
+                go("game", 0, true);
+            }
             else go("levels");
         })
     })
 
     let selectIcon = add([
         sprite("bunnyIcon"),
-        scale(2),
-        pos(100, 390),
+        scale(2/2),
+        pos(100/2, 390/2),
         anchor("left")
     ])
     loop(0.01, () => {
-        if(gambiarra) selectIcon.pos.y = 390;
-        else selectIcon.pos.y = 440;
+        if(gambiarra) selectIcon.pos.y = 390/2;
+        else selectIcon.pos.y = 440/2;
     })
 
     // await addThings();
@@ -208,18 +270,19 @@ scene("home", async() => {
 scene("levels", async() => {
     add([
         sprite("bg"),
-        pos(-100, -100),
-        scale(3),
+        pos(-100/2, -100/2),
+        scale(3/2),
         color(160, 160, 160),
     ]);
     add([
         text("Level Select", {size: 96, font:"pixel"}),
-        pos(400, 80),
+        pos(400/2, 80/2),
         anchor("top"),
+        scale(0.5)
     ])
     await enterScene();
 
-    const amountOfLevels = 11;
+    const amountOfLevels = 12;
     let levelBox = [];
     let levelNumber = [];
 
@@ -229,23 +292,25 @@ scene("levels", async() => {
             // border(10),
             outline(5, {color: rgb (250, 250, 250)}),
             // text(i+1, {size: 24}),
-            pos(200+400/5*(i%5) + 600/20, 800 + parseInt(i/5)*100),
+            pos((200+400/5*(i%5) + 600/20)/2, (800 + parseInt(i/5)*100)/2),
             anchor("center"),
-            color(50, 50, 150)
+            color(50, 50, 150),
+            scale(0.5)
         ]))
         levelNumber.push(add([
             text(i+1, {size: 24}),
-            pos(200+400/5*(i%5) + 600/20, 800 + parseInt(i/5)*100),
+            pos((200+400/5*(i%5) + 600/20)/2, (800 + parseInt(i/5)*100)/2),
             anchor("center"),
-            z(2)
+            z(2),
+            scale(0.5)
         ]))
     }
 
     async function addThings() {
         for(let i = 0; i < 20; i++) {
             for(let j = 0; j < amountOfLevels; j++) {
-                levelBox[j].pos.y -= (levelBox[j].pos.y - (300 + parseInt(j/5)*100))*0.2;
-                levelNumber[j].pos.y = levelBox[j].pos.y +2;
+                levelBox[j].pos.y -= (levelBox[j].pos.y - (300 + parseInt(j/5)*100)/2)*0.2;
+                levelNumber[j].pos.y = levelBox[j].pos.y +2/2;
             }
             await wait(0.05)
         }
@@ -254,7 +319,8 @@ scene("levels", async() => {
 
     add([
         text("Arrow keys to select, z to confirm.", {size: 24, font:"pixel"}),
-        pos(50, 550),
+        pos(50/2, 550/2),
+        scale(0.5)
     ])
 
     let selectedLevel = 0;
@@ -264,6 +330,7 @@ scene("levels", async() => {
 
     onKeyPress("down", () => {
         if(alreadySelected) return;
+        play("pam", {volume: 0.5});
         levelBox[selectedLevel].use(color(50, 50, 150));
         selectedLevel += 5;
         if(selectedLevel >= amountOfLevels) selectedLevel %=5;
@@ -271,6 +338,7 @@ scene("levels", async() => {
     })
     onKeyPress("up", () => {
         if(alreadySelected) return;
+        play("pam", {volume: 0.5});
         levelBox[selectedLevel].use(color(50, 50, 150));
         selectedLevel -= 5;
         if(selectedLevel < 0) selectedLevel += 5*(parseInt(amountOfLevels/5)+1);
@@ -279,6 +347,7 @@ scene("levels", async() => {
     })
     onKeyPress("right", () => {
         if(alreadySelected) return;
+        play("pam", {volume: 0.5});
         levelBox[selectedLevel].use(color(50, 50, 150));
         selectedLevel++;
         if(selectedLevel >= amountOfLevels) selectedLevel = 0;
@@ -286,6 +355,7 @@ scene("levels", async() => {
     })
     onKeyPress("left", () => {
         if(alreadySelected) return;
+        play("pam", {volume: 0.5});
         levelBox[selectedLevel].use(color(50, 50, 150));
         selectedLevel--;
         if(selectedLevel < 0) selectedLevel = amountOfLevels-1;
@@ -295,24 +365,26 @@ scene("levels", async() => {
     onKeyPress("z", () => {
         alreadySelected = true;
         levelBox[selectedLevel].use(color(0, 0, 50));
-        exitScene().then(() => go("game", selectedLevel));
+        homeMusic.stop();
+        exitScene().then(() => go("game", selectedLevel, true));
     })
 })
 
 // scene GAME
-scene("game", async(level) => {
-// await enterScene();
-
-const CollisionTileSize = 40;
+scene("game", async(level, playMusic = false) => {
+const CollisionTileSize = 20;
 const TotalDashCooldown = 8;
-const TileSize = 32;
-const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, 4, 2, 5, -1];
+const TileSize = 16;
+const RequiredCarrots = [1, 2, 1, 3, 1, 1, 1, 1, 4, 2, 5, 4, -1];
 const TextSize = 18;
 let gamePaused = false;
 
-let startingPos = {x: 3, y: -2};
+let startingPos = {x: 3/2, y: -2/2};
 
-if(RequiredCarrots[level] == -1) go("win");
+if(RequiredCarrots[level] == -1) {
+    gameMusic.stop();
+    go("win");
+}
 console.log(RequiredCarrots[level]);
 
 let levelsTile = [
@@ -519,6 +591,32 @@ let levelsTile = [
         "           ..                                         ",
         "                                                      "
     ], // 10
+    [
+        "                                                      ",
+        "                     X                                ",
+        "                                                      ",
+        "                  ........                            ",
+        "                  ........                            ",
+        "                   ........                           ",
+        "                         ..                           ",
+        "                                                      ",
+        "     g                        *                 c*    ",
+        "    .....                  .......              ..    ", // Pulos máximos com greedy
+        "    .....  *               .......              ..    ",
+        "           *          *..                             ",
+        "                      *..                             ",
+        "     p         ...    *    ....                  c    ",
+        "              ....    *    ....                 ..    ",
+        "   c   s   *  ..      *                         ..    ",
+        "  .......  *          *               ***     *       ",
+        "  .......             *      ..                       ",
+        "                      *      ..             s         ", 
+        "                      *      ..  ...       ...        ",
+        "                      *          ...       ...        ",
+        "                      *                               ",
+        "                                                      ",
+        "                                                      ",
+    ], // 11 - Boss
     [[]]
 ]
 
@@ -545,7 +643,7 @@ function loadLevel() {
                 add([
                     pos(c*TileSize, row*TileSize),
                     sprite("tile"),
-                    scale(2),
+                    scale(2/2),
                 ]).play(tb+lr);
                 
             }
@@ -558,11 +656,26 @@ function loadLevel() {
                     sprObj: add([
                         pos(c*TileSize, row*TileSize),
                         sprite("carrot"),
-                        scale(2),
+                        scale(2/2),
                         z(2)
                     ])
                 })
             }
+            // // golden carrot
+            // if(levelsTile[level][row][c] == 'X') {
+            //     addColliding({
+            //         x: c*TileSize, y: row*TileSize,
+            //         width: TileSize*2, height: TileSize*2,
+            //         tg: "carrot",
+            //         sprObj: add([
+            //             pos(c*TileSize, row*TileSize),
+            //             sprite("goldenCarrot"),
+            //             scale(2),
+            //             z(2)
+            //         ])
+            //     })
+            //     console.log(c*TileSize, row*TileSize)
+            // }
             // bush
             if(levelsTile[level][row][c] == '*') {
                 addColliding({
@@ -573,7 +686,8 @@ function loadLevel() {
                 add([
                     pos(c*TileSize, row*TileSize),
                     sprite("bush"),
-                    z(2)
+                    z(2),
+                    scale(0.5)
                 ])
             }
 
@@ -586,7 +700,8 @@ function loadLevel() {
                     sprObj: add([
                         pos(c*TileSize, row*TileSize),
                         sprite("shield"),
-                        z(2)
+                        z(2),
+                        scale(0.5)
                     ])
                 })
                 if(level == 4) a.sprObj.use(opacity(0));
@@ -600,7 +715,8 @@ function loadLevel() {
                     sprObj: add([
                         pos(c*TileSize, row*TileSize),
                         sprite("gold"),
-                        z(2)
+                        z(2),
+                        scale(0.5)
                     ])
                 })
                 if(level == 6) a.sprObj.use(opacity(0));
@@ -615,92 +731,148 @@ function loadLevel() {
     let textColor = WHITE;
     if(level == 0) {
         add([
-            pos(32, 50),
+            pos(32/2, 50/2),
             text("WASD or arrows to move.\nYou are a bunny, so you will only move by jumping.\nCollect one carrot to win.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
         add([
-            pos(450, 100),
+            pos(450/2, 100/2),
             text("Hold z(or the left button of your mouse) to jump farther.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 1) {
         add([
-            pos(32, 50),
-            text("If you ever get tired of playing, you can press ESC to go back to starting screen.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            pos(32/2, 50/2),
+            text("If you ever get tired of playing, you can press ESC to go back to home screen.", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 2) {
         add([
-            pos(32, 50),
+            pos(32/2, 50/2),
             text("Avoid deadly, dangerous, unsafe, hazardous, lethal, toxic, poisonous and venomous wild bushes.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 3) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("If you want, go see the source code on github!\nhttps://insanyngame.github.io/bunnyGame", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 4) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("Scared!\nGetting scared will make you jump higher.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 5) {
         add([
-            pos(500, 150),
+            pos(500/2, 150/2),
             text("Is that a shield?\nBunnies are afraid of weapons!\nCollecting the shield will make the bunny scared.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
         add([
-            pos(650, 320),
+            pos(650/2, 320/2),
             text("Tip: If you hold up key, you can jump higher.\nThe opposite is also true.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 6) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("Greedy, always trying to find new things!\nGetting greedy will make you move faster.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 7) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("Gold coins make you greedy.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 8) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("Be careful!\nCollecting carrots give you a snapback to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
         add([
-            pos(1000, 50),
+            pos(1000/2, 50/2),
             text("Try going to the very edge without falling\nand then jumping forward, you will not receive any boost upward.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
     }
     if(level == 8) {
         add([
-            pos(32, 150),
+            pos(32/2, 150/2),
             text("Be careful!\nCollecting carrots give you a snapback to reality\nmaking you stop being scared or greedy.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
         ])
         add([
-            pos(1000, 50),
+            pos(1000/2, 50/2),
             text("Try going to the very edge without falling\nand then jumping forward, you will not receive any boost upward.", {size: TextSize, font: "pixel"}),
-            color(textColor)
+            color(textColor),
+            scale(0.5)
+        ])
+    }
+    if(level == 9) {
+        add([
+            pos(32/2, 150/2),
+            text("Jump over or under the bushes, its your choice!", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
+        ])
+    }
+    if(level == 10) {
+        add([
+            pos(32/2, 150/2),
+            text("Same level? No, its slightly different..", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
+        ])
+    }
+    if(level == 11) {
+        add([
+            pos(32/2, 400/2),
+            text("Seems like we've reached an end...\nGood luck!", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
+        ])
+        add([
+            pos(32/2, 200/2),
+            text("To the right!", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
+        ])
+        add([
+            pos(900/2, 200/2),
+            text("To the right!", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
+        ])
+        add([
+            pos(1200/2, 700/2),
+            text("Left then up! There might be a special carrot.", {size: TextSize, font: "pixel"}),
+            color(textColor),
+            scale(0.5)
         ])
     }
 }
@@ -711,9 +883,11 @@ let player = add([
     rect(40, 24),
     pos(startingPos.x*TileSize, startingPos.y*TileSize),
     opacity(0),
+    area(),
+    scale(0.5),
     {
-        w: 40,
-        h: 24,
+        w: 40/2,
+        h: 24/2,
         velX: 0,
         velY: 0,
         moveVelX: 0,
@@ -725,14 +899,14 @@ let player = add([
 ])
 
 let playerSpr = add([
-    pos(player.pos.x + -10, player.pos.y + -40),
+    pos(player.pos.x + -10/2, player.pos.y + -40/2),
     sprite(`bunny${player.bunnyColor}Idle`),
-    scale(2),
+    scale(2/2),
     {
         sprite: `bunny${player.bunnyColor}Idle`,
         face: 0, // (0 é direita, 1 é esquerda, msm q o flipX)
         ofs: {
-            x: -10, y: -40
+            x: -10/2, y: -40/2
         }
     } 
 ])
@@ -892,8 +1066,8 @@ function isGrounded(obj) {
 }
 
 addColliding({
-    x: -1000, y: TileSize*(levelsTile[level].length+2),
-    width: TileSize*(levelsTile[level][0].length+2)+2000, height: 100,
+    x: -1000/2, y: TileSize*(levelsTile[level].length+2),
+    width: TileSize*(levelsTile[level][0].length+2)+2000/2, height: 100/2,
     tg: "kill"
 })
 
@@ -906,7 +1080,7 @@ function flipPlayerSpr(flip) {
     playerSpr.face = flip;
 }
 // flipPlayerSpr(true);
-const CorneringAmount = 10;
+const CorneringAmount = 10/2;
 
 function isCorneringRight(obj) {
     if(!isGrounded(obj)) return false;
@@ -929,29 +1103,29 @@ function isCorneringLeft(obj) {
 function getVelocities() {
     // if (isCornering(player))debug.log(isCornering(player));
     // gravity
-    if(isKeyDown("up") || isKeyDown("w")) player.velY = Math.min(player.velY + 2, 36);
-    else player.velY = Math.min(player.velY + 4, 36);
+    if(isKeyDown("up") || isKeyDown("w")) player.velY = Math.min(player.velY + 2/2, 36/2);
+    else player.velY = Math.min(player.velY + 4/2, 36/2);
 
     player.dashCd = Math.max(player.dashCd-1, 0);
 
     // inercia
     if(isGrounded(player)) {
-        if(Math.abs(player.velX) < 2) player.velX = 0;
+        if(Math.abs(player.velX) < 2/2) player.velX = 0;
         else player.velX = (player.velX * 0.75);
     } else {
-        if(Math.abs(player.velX) < 2) player.velX = 0;
+        if(Math.abs(player.velX) < 2/2) player.velX = 0;
         else player.velX = (player.velX * 0.95);
     }
 
-    let velXBoost = 6;
-    if(player.bunnyColor == "Yellow") velXBoost = 12;
+    let velXBoost = 6/2;
+    if(player.bunnyColor == "Yellow") velXBoost = 12/2;
 
-    let velYBoost = 20;
-    if(player.bunnyColor == "Gray") velYBoost = 25;
+    let velYBoost = 20/2;
+    if(player.bunnyColor == "Gray") velYBoost = 25/2;
     if(isGrounded(player) && (isKeyDown("w") || isKeyDown("up"))) {
         // debug.log(isCorneringLeft + " " + isCorneringRight)
         if(!((isCorneringLeft(player) && (isKeyDown("a") || isKeyDown("left"))) || (isCorneringRight(player) && (isKeyDown("d") || isKeyDown("right"))))) player.velY -= velYBoost;
-        else velXBoost += 6;
+        else velXBoost += 6/2;
     }
 
     let moveVelX = 0;
@@ -1106,6 +1280,7 @@ function updatePowerUp() {
             playerSpr.use(sprite(`bunny${player.bunnyColor}Idle`, {flipX: playerSpr.face}));
             playerSpr.play("anim", {speed: 3});
         }
+
         carrotCounter[player.collectedCarrots].unuse("color");
         let sprPos = carrot.sprObj.pos;
         carrot.sprObj.destroy();
@@ -1115,12 +1290,26 @@ function updatePowerUp() {
             gamePaused = true;
             add([
                 pos(sprPos.x, sprPos.y),
-                sprite("carrot"),
-                scale(2),
+                sprite((level == 11?"goldenCarrot":"carrot")),
+                scale(2/2),
                 z(6)
             ])
             exitScene().then(() => {
                 go("game", level+1);
+            })
+        }
+
+        if(level == 11 && player.collectedCarrots == RequiredCarrots[level]-1) {
+            addColliding({
+                x: 672/2, y: 32/2,
+                width: TileSize*2, height: TileSize*2,
+                tg: "carrot",
+                sprObj: add([
+                    pos(672/2, 32/2),
+                    sprite("goldenCarrot"),
+                    scale(2/2),
+                    z(2)
+                ])
             })
         }
     } else if(shield) {
@@ -1157,8 +1346,8 @@ function updatePowerUp() {
 
 let bg = add([
     sprite("bg"),
-    pos(-800, -600),
-    scale(8),
+    pos(-800/2, -600/2),
+    scale(8/2),
     color(160, 160, 160),
     z(-1),
     {
@@ -1171,14 +1360,26 @@ let bg = add([
 if(level == 4) bg.use(color(bg.Gray[0], bg.Gray[1], bg.Gray[2]));
 if(level == 6) bg.use(color(bg.Yellow[0], bg.Yellow[1], bg.Yellow[2]));
 
-playerSpr.opacity = 0;
-camPos(player.pos.x + (playerSpr.face?-80:80), player.pos.y+100)
+playerSpr.opacity = 1;
+camPos(player.pos.x + (playerSpr.face?-80/2:80/2), player.pos.y+100/2)
 await enterScene();
+if(playMusic) gameMusic.play();
+
 playerSpr.opacity = 1;
 
 function fallingEffect() {
     if(!player.playingFallSound) {
-        play("fall");
+
+        add([
+            sprite("smoke"),
+            pos(player.pos.x, player.pos.y),
+            color(100, 30, 20),
+            opacity(0.3),
+            scale(0.5),
+            z(2),
+        ]).play("anim", {speed: 16});
+
+        play("fall", {volume: 1});
         player.playingFallSound = true;
         wait(0.02).then(() => {
             player.playingFallSound = false;
@@ -1188,17 +1389,23 @@ function fallingEffect() {
 
 function updateCamera() {
     let oldCam = camPos();
-    let newPos = {x: player.pos.x + (playerSpr.face?-80:80), y: player.pos.y-80};
+    let newPos = {x: player.pos.x + (playerSpr.face?-80/2:80/2), y: player.pos.y-80/2};
     camPos(oldCam.x + (newPos.x - oldCam.x)*0.2, oldCam.y + (newPos.y - oldCam.y)*0.2);
 }
 
 let carrotCounter = []
 function addCarrotCounter () {
+    add([
+        text(`Level ${level+1}`, {font: "pixel", size: 12}),
+        pos(686/2, 16/2),
+        color(250, 250, 250),
+        fixed(),
+    ])
     for(let i = 0; i < RequiredCarrots[level]; i++) {
         carrotCounter.push(
             add([
-                pos(16+i*TileSize, 16),
-                scale(2),
+                pos(16/2+i*TileSize, 16/2),
+                scale(2/2),
                 sprite("carrot"),
                 color(150, 150, 150),
                 fixed()
@@ -1221,6 +1428,7 @@ function pauseControl() {
 function exitControl() {
     if(isKeyDown("escape")) {
         gamePaused = true;
+        gameMusic.stop();
         exitScene().then(() => go("home"))
     }
 }
@@ -1261,5 +1469,70 @@ loop(0.001, () => {
     }
 })
 })
-
-go("home");
+scene("batatinhaQuandoNasceEspalhaRamaPeloChao", async() => {
+    add([
+        rect(800, 600),
+        pos(0, 0),
+        color(BLACK),
+        scale(0.5)
+    ])
+    let txt = add([
+        text("An Insanyngame's Project", {font:"bauhaus", size: 48}),
+        pos(400/2, 400/2),
+        anchor("center"),
+        opacity(0),
+        scale(0.5)
+    ]);
+    let icon = add([
+        sprite("INSANYNGAME"),
+        pos(400/2, 250/2),
+        anchor("center"),
+        opacity(0),
+        scale(0.5/2)
+    ])
+    for(let i = 0; i < 20; i++) {
+        txt.opacity += 0.05;
+        icon.opacity += 0.05;
+        await wait(0.05);
+    }
+    await wait(2);
+    for(let i = 0; i < 20; i++) {
+        txt.opacity -= 0.05;
+        icon.opacity -= 0.05;
+        await wait(0.05);
+    }
+    txt = add([
+        text("Semana Santa Game Jam", {font:"pixel", size: 48}),
+        pos(center()),
+        anchor("center"),
+        opacity(0),
+        scale(0.5)
+    ]);
+    for(let i = 0; i < 20; i++) {
+        txt.opacity += 0.05;
+        await wait(0.05);
+    }
+    await wait(2);
+    for(let i = 0; i < 20; i++) {
+        txt.opacity -= 0.05;
+        await wait(0.05);
+    }
+    go("home");
+})
+add([
+    rect(800, 600),
+    pos(0, 0),
+    color(BLACK),
+    scale(0.5)
+])
+add([
+    text("Press any key to start", {font: "pixel", size: 24}),
+    pos(400/2, 400/2),
+    anchor("top"),
+    scale(0.5)
+])
+onKeyPress((key) => {
+    console.log(key)
+    if(key == "w") go("win");
+    else go("batatinhaQuandoNasceEspalhaRamaPeloChao");
+})
